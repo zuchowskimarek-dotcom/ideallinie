@@ -1,0 +1,25 @@
+{
+  "name": "rn-ideallinie",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RN NextGen — Ideal Racing Line computation platform",
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "db:migrate": "cd database && npx prisma migrate dev",
+    "db:generate": "cd database && npx prisma generate",
+    "db:studio": "cd database && npx prisma studio"
+  },
+  "devDependencies": {
+    "turbo": "^1.13.0",
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0"
+  }
+}
