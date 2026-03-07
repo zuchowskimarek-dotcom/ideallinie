@@ -1,0 +1,11 @@
+{
+  "name": "@rn-ideallinie/solver-service",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "python3.11 -m uvicorn main:app --reload --port 8001 --host 0.0.0.0",
+    "build": "echo 'Python service — no build step'",
+    "lint": "echo 'lint placeholder'",
+    "test": "echo 'test placeholder'"
+  }
+}
