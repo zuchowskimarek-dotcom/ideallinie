@@ -17,6 +17,10 @@ export interface TrackGeometry {
   endLine: { label: string; left: { x: number; y: number }; centre: { x: number; y: number }; right: { x: number; y: number } } | null;
   sectorLines: Array<{ label: string; left: { x: number; y: number }; centre: { x: number; y: number }; right: { x: number; y: number } }>;
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
+  /** Elevation profile from telemetry measurements (null if no lap data) */
+  elevationProfile: Array<{ s: number; altitudeM: number }> | null;
+  /** Elevation mapped to each centreline point via interpolation (null if no lap data) */
+  centrelineElevation: (number | null)[] | null;
 }
 
 interface UseTrackGeometryResult {

@@ -4,6 +4,7 @@ import type {
   RnGpsPointDto,
   TrackGeometry,
   TrackLineGeometry,
+  ElevationSample,
 } from "@rn-ideallinie/shared-types";
 import {
   projectToCartesian,
@@ -12,6 +13,7 @@ import {
   offsetPolyline,
   computeBounds,
   computeHeadings,
+  interpolateElevation,
 } from "../geometry/math.js";
 
 export const geometryRoutes: FastifyPluginAsync<{ prisma: PrismaClient }> =
@@ -99,6 +101,45 @@ export const geometryRoutes: FastifyPluginAsync<{ prisma: PrismaClient }> =
           const allPoints = [...points, ...boundaryLeft, ...boundaryRight];
           const bounds = computeBounds(allPoints, 15);
 
+          // 6. Elevation data from best lap's measurements
+          let elevationProfile: ElevationSample[] | null = null;
+          let centrelineElevation: (number | null)[] | null = null;
+
+          try {
+            const bestLap = await prisma.rnLap.findMany({
+              where: { rnVariantSourceId: variant.id },
+              select: {
+                id: true,
+                _count: { select: { measurements: true } },
+              },
+              orderBy: { measurements: { _count: "desc" } },
+              take: 1,
+            });
+
+            if (bestLap.length > 0) {
+              const measurements = await prisma.rnMeasurement.findMany({
+                where: { lapId: bestLap[0]!.id },
+                select: { distanceMm: true, altitudeM: true },
+                orderBy: { distanceMm: "asc" },
+              });
+
+              if (measurements.length > 0) {
+                elevationProfile = measurements.map((m) => ({
+                  s: m.distanceMm / 1000,
+                  altitudeM: m.altitudeM,
+                }));
+
+                centrelineElevation = interpolateElevation(
+                  centreline.map((p) => p.s),
+                  elevationProfile
+                );
+              }
+            }
+          } catch (elevErr: any) {
+            // Elevation is optional — log but don't fail the whole response
+            app.log.warn("Failed to fetch elevation data: " + elevErr.message);
+          }
+
           const geometry: TrackGeometry = {
             variantId: variant.id,
             variantName: variant.variantName,
@@ -113,6 +154,8 @@ export const geometryRoutes: FastifyPluginAsync<{ prisma: PrismaClient }> =
               .map((s) => projectLine(s.points, s.description))
               .filter((s): s is TrackLineGeometry => s !== null),
             bounds,
+            elevationProfile,
+            centrelineElevation,
           };
 
           return { data: geometry, message: "Geometry computed successfully" };

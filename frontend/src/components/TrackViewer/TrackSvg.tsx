@@ -1,16 +1,13 @@
+import { useMemo } from "react";
 import type { TrackGeometry } from "./useTrackGeometry";
-import {
-  buildCurvatureSegments,
-  CURVATURE_COLORS_LAVA,
-  CURVATURE_COLORS_GRELLO,
-} from "./curvature-colors";
 
 interface TrackSvgProps {
   geometry: TrackGeometry;
   theme: "lava" | "grello";
   transform: string;
-  onHoverPoint?: (index: number | null) => void;
+  onHoverS?: (s: number | null) => void;
   hoveredPoint?: number | null;
+  showElevationTint?: boolean;
 }
 
 function toSvgPoints(pts: Array<{ x: number; y: number }>): string {
@@ -45,31 +42,54 @@ export function TrackSvg({
   geometry,
   theme,
   transform,
-  onHoverPoint,
+  onHoverS,
   hoveredPoint,
+  showElevationTint,
 }: TrackSvgProps) {
   const { centreline, boundaryLeft, boundaryRight, startLine, sectorLines, bounds } =
     geometry;
-  const stops =
-    theme === "lava" ? CURVATURE_COLORS_LAVA : CURVATURE_COLORS_GRELLO;
 
   const vbX = bounds.minX;
   const vbY = -bounds.maxY;
   const vbW = bounds.maxX - bounds.minX;
   const vbH = bounds.maxY - bounds.minY;
 
-  // Build curvature-colored centreline segments
-  const segments = buildCurvatureSegments(
-    centreline.map((n) => n.pos),
-    centreline.map((n) => n.curvature),
-    stops
-  );
-
   // Track surface polygon: left boundary forward + right boundary reversed
   const surfacePoints = [
     ...boundaryLeft.map((p) => `${p.x},${-p.y}`),
     ...[...boundaryRight].reverse().map((p) => `${p.x},${-p.y}`),
   ].join(" ");
+
+  // Elevation tint quads
+  const elevationQuads = useMemo(() => {
+    if (!showElevationTint || !geometry.centrelineElevation) return null;
+
+    const elev = geometry.centrelineElevation;
+    let minAlt = Infinity;
+    let maxAlt = -Infinity;
+    for (const v of elev) {
+      if (v != null) {
+        if (v < minAlt) minAlt = v;
+        if (v > maxAlt) maxAlt = v;
+      }
+    }
+    const range = maxAlt - minAlt || 1;
+
+    const quads: Array<{ points: string; opacity: number }> = [];
+    for (let i = 0; i < centreline.length - 1; i++) {
+      const alt = elev[i] ?? minAlt;
+      const t = (alt - minAlt) / range;
+      const opacity = 0.03 + 0.09 * t;
+      const pts = [
+        `${boundaryLeft[i]!.x},${-boundaryLeft[i]!.y}`,
+        `${boundaryLeft[i + 1]!.x},${-boundaryLeft[i + 1]!.y}`,
+        `${boundaryRight[i + 1]!.x},${-boundaryRight[i + 1]!.y}`,
+        `${boundaryRight[i]!.x},${-boundaryRight[i]!.y}`,
+      ].join(" ");
+      quads.push({ points: pts, opacity });
+    }
+    return quads;
+  }, [showElevationTint, geometry.centrelineElevation, centreline, boundaryLeft, boundaryRight]);
 
   return (
     <svg
@@ -78,8 +98,19 @@ export function TrackSvg({
       preserveAspectRatio="xMidYMid meet"
     >
       <g transform={transform}>
-        {/* Track surface ribbon */}
-        <polygon className="track-surface" points={surfacePoints} />
+        {/* Track surface — elevation tinted or flat */}
+        {elevationQuads ? (
+          elevationQuads.map((q, i) => (
+            <polygon
+              key={`elev-${i}`}
+              points={q.points}
+              fill={`rgba(255, 255, 255, ${q.opacity})`}
+              stroke="none"
+            />
+          ))
+        ) : (
+          <polygon className="track-surface" points={surfacePoints} />
+        )}
 
         {/* Boundaries */}
         <polyline
@@ -92,17 +123,6 @@ export function TrackSvg({
           points={toSvgPoints(boundaryRight)}
           fill="none"
         />
-
-        {/* Curvature-coded centreline segments */}
-        {segments.map((seg, i) => (
-          <polyline
-            key={i}
-            className="track-centreline-segment"
-            points={seg.points}
-            stroke={seg.color}
-            fill="none"
-          />
-        ))}
 
         {/* Sector lines */}
         {sectorLines.map((sl, i) => (
@@ -143,12 +163,12 @@ export function TrackSvg({
           points={toSvgPoints(centreline.map((n) => n.pos))}
           fill="none"
           onMouseMove={(e) => {
-            if (onHoverPoint) {
+            if (onHoverS) {
               const idx = findNearestPointIndex(e, centreline);
-              onHoverPoint(idx);
+              onHoverS(centreline[idx]?.s ?? null);
             }
           }}
-          onMouseLeave={() => onHoverPoint?.(null)}
+          onMouseLeave={() => onHoverS?.(null)}
         />
       </g>
     </svg>

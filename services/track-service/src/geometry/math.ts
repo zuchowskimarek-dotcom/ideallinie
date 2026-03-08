@@ -248,3 +248,43 @@ export function buildTrackPoints(
     curvature: curvatures[i]!,
   }));
 }
+
+// ---------------------------------------------------------------------------
+// Elevation interpolation
+// ---------------------------------------------------------------------------
+
+/**
+ * Interpolate altitude values from measurement samples onto centreline points.
+ * Uses binary search for O(n log m) performance.
+ *
+ * @param centrelineS  Arc-length values for each centreline point (metres)
+ * @param samples      Sorted measurement samples with { s (metres), altitudeM }
+ * @returns            Altitude per centreline point (null if no samples)
+ */
+export function interpolateElevation(
+  centrelineS: number[],
+  samples: Array<{ s: number; altitudeM: number }>
+): (number | null)[] {
+  if (samples.length === 0) return centrelineS.map(() => null);
+
+  return centrelineS.map((s) => {
+    // Clamp to first/last sample
+    if (s <= samples[0]!.s) return samples[0]!.altitudeM;
+    if (s >= samples[samples.length - 1]!.s) return samples[samples.length - 1]!.altitudeM;
+
+    // Binary search for bracketing samples
+    let lo = 0;
+    let hi = samples.length - 1;
+    while (lo < hi - 1) {
+      const mid = (lo + hi) >> 1;
+      if (samples[mid]!.s <= s) lo = mid;
+      else hi = mid;
+    }
+
+    // Linear interpolation
+    const ds = samples[hi]!.s - samples[lo]!.s;
+    if (ds < 0.001) return samples[lo]!.altitudeM;
+    const t = (s - samples[lo]!.s) / ds;
+    return samples[lo]!.altitudeM + t * (samples[hi]!.altitudeM - samples[lo]!.altitudeM);
+  });
+}

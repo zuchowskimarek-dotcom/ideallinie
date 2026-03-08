@@ -77,6 +77,12 @@ export interface TrackLineGeometry {
   right: Point2D;
 }
 
+/** Elevation sample: arc-length + altitude from telemetry */
+export interface ElevationSample {
+  s: number;         // arc-length along centreline (metres)
+  altitudeM: number; // altitude in metres (GPS/barometric)
+}
+
 /** Complete rendering-ready geometry payload for a track variant */
 export interface TrackGeometry {
   variantId: string;
@@ -97,6 +103,10 @@ export interface TrackGeometry {
   sectorLines: TrackLineGeometry[];
   /** Bounding box for SVG viewBox computation */
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
+  /** Elevation profile from telemetry measurements (null if no lap data) */
+  elevationProfile: ElevationSample[] | null;
+  /** Elevation mapped to each centreline point via interpolation (null if no lap data) */
+  centrelineElevation: (number | null)[] | null;
 }
 
 /** Lightweight outline for track card thumbnails */

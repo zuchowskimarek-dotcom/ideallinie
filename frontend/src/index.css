@@ -869,13 +869,14 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-base); 
 }
 
 /* =========================================================
-   Track Viewer — Full-Page Detail View
+   Track Viewer — 4-Panel Layout
    ========================================================= */
-.track-viewer {
+.track-viewer-4panel {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
   background: var(--bg-base);
+  overflow: hidden;
 }
 
 .track-viewer-header {
@@ -885,8 +886,7 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-base); 
   padding: 12px 24px;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 50;
 }
 
@@ -908,6 +908,63 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-base); 
   gap: 8px;
 }
 
+/* Body: left + canvas + right */
+.track-viewer-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Left panel — Point Inspector */
+.track-viewer-left {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  overflow-y: auto;
+}
+
+/* Right panel — coaching placeholder */
+.track-viewer-right {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.track-viewer-right-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.track-viewer-right-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0.3;
+}
+
+.track-viewer-right-placeholder-icon {
+  font-size: 24px;
+}
+
+.track-viewer-right-placeholder-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
 /* =========================================================
    Track Viewer — Canvas Area
    ========================================================= */
@@ -916,6 +973,7 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-base); 
   position: relative;
   overflow: hidden;
   cursor: grab;
+  min-width: 0;
   background:
     radial-gradient(circle at 50% 50%, rgba(255,255,255,0.02) 0%, transparent 70%),
     var(--bg-base);
@@ -947,21 +1005,20 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-base); 
 }
 
 .track-surface {
-  fill: rgba(255, 255, 255, 0.04);
+  fill: rgba(255, 255, 255, 0.06);
   stroke: none;
 }
 
 .track-boundary {
-  stroke: var(--border-card);
-  stroke-width: 1;
+  stroke: rgba(255, 255, 255, 0.45);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
 }
 
 .track-centreline-segment {
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
+  display: none;
 }
 
 .track-centreline-hitarea {
@@ -1058,4 +1115,146 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-base); 
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+/* =========================================================
+   Point Inspector (Left Panel)
+   ========================================================= */
+.point-inspector {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.point-inspector-header {
+  padding-bottom: 8px;
+}
+
+.point-inspector-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.point-inspector-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.point-inspector-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.point-inspector-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.point-inspector-divider {
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.point-inspector-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.point-inspector-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.point-inspector-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.point-inspector-value.mono {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   Elevation Profile (Bottom Strip)
+   ========================================================= */
+.elevation-profile {
+  flex-shrink: 0;
+  height: 120px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+  cursor: crosshair;
+  position: relative;
+}
+
+.elevation-profile-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.elevation-profile-area {
+  fill: var(--accent);
+  opacity: 0.12;
+  stroke: none;
+}
+
+.elevation-profile-line {
+  fill: none;
+  stroke: var(--accent-text);
+  stroke-width: 1.5;
+  opacity: 0.6;
+}
+
+.elevation-profile-crosshair {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.8;
+}
+
+.elevation-profile-dot {
+  fill: var(--accent);
+  stroke: var(--bg-surface);
+  stroke-width: 2;
+}
+
+.elevation-profile-label {
+  font-size: 9px;
+  fill: var(--text-muted);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.elevation-profile-title {
+  font-size: 9px;
+  fill: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+/* =========================================================
+   Elevation Toggle Button
+   ========================================================= */
+.elevation-toggle {
+  font-size: 12px;
+}
+
+.elevation-toggle.active {
+  background: var(--accent-muted);
+  border-color: var(--border-accent);
+  color: var(--accent-text);
 }
