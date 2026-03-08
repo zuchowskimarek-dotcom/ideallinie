@@ -403,3 +403,30 @@ export interface TrajectoryComparisonResult {
   lateralDeviationM: number[]; // lateral deviation between the two paths
   summaryDeltaS: number;       // total lap time difference
 }
+
+// ---------------------------------------------------------------------------
+// RN Import API types
+// ---------------------------------------------------------------------------
+
+export interface RnImportResult {
+  status: "imported" | "duplicate" | "error";
+  lapId?: string;
+  rnSourceLapId: number;
+  track: {
+    id: string;
+    name: string;
+    variantName: string;
+    variantVersion: number;
+    action: "created" | "existing" | "new_version";
+  };
+  lap: {
+    lapNumber: number;
+    startTime: string;   // ISO-8601
+    lapTimeMs: number | null;
+  };
+  counts: {
+    measurements: number;
+    canRecords: number;
+  };
+}
+

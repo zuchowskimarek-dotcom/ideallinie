@@ -8,3 +8,8 @@ __pycache__/
 .venv/
 *.egg-info/
 .prisma/
+.logs/
+.logs/
+.claude/
+venv/
+docs/rnz/

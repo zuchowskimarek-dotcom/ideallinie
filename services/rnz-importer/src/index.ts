@@ -1,24 +1,23 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import multipart from "@fastify/multipart";
 import { config } from "dotenv";
 import { healthRoutes } from "./routes/health.js";
-import { trackRoutes } from "./routes/tracks.js";
-import { PrismaClient } from "@prisma/client";
+import { importRoutes } from "./routes/import.js";
 
 config({ path: "../../.env" });
 
-const prisma = new PrismaClient({
-  log: ["query", "info", "warn", "error"],
-});
-
-const PORT = Number(process.env.TRACK_SERVICE_PORT) || 8002;
+const PORT = Number(process.env.RNZ_IMPORTER_PORT) || 8004;
 
 async function main() {
   const app = Fastify({ logger: true });
 
   await app.register(cors, { origin: true });
+  await app.register(multipart, {
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB max
+  });
   await app.register(healthRoutes);
-  await app.register(trackRoutes, { prisma });
+  await app.register(importRoutes);
 
   await app.listen({ port: PORT, host: "0.0.0.0" });
 }

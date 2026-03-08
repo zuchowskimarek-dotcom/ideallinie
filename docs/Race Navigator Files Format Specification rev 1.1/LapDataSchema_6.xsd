@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" id="LapDataSchema"
+    targetNamespace="http://macrix.eu/racenavigator/LapDataSchema"    
+    xmlns="http://macrix.eu/racenavigator/LapDataSchema"      
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    version="5" >
+    <!-- xmlns:mstns="http://tempuri.org/LapDataSchema.xsd" -->
+  <xs:simpleType name="CustomDate">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="([0-9]{4})-((0[1-9])|(1[0-2]))-((0[1-9])|(1[0-9])|(2[0-9])|(3[0-1])) ((0[0-9])|(1[0-9])|(2[0-3])):([0-5][0-9]):([0-5][0-9])\.([0-9]{3})" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CustomDateOrEmpty">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\s*|([0-9]{4})-((0[1-9])|(1[0-2]))-((0[1-9])|(1[0-9])|(2[0-9])|(3[0-1])) ((0[0-9])|(1[0-9])|(2[0-3])):([0-5][0-9]):([0-5][0-9])\.([0-9]{3})" />
+    </xs:restriction>
+  </xs:simpleType>
+  
+  <xs:complexType name="referencePoints">
+    <xs:sequence>
+      <xs:element name="referencePoint" type="location" minOccurs="1" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="description" type="xs:string"></xs:attribute>
+  </xs:complexType>
+  
+  <xs:complexType name="polygon">
+    <xs:sequence>
+        <xs:element name="referencePoints" type="referencePoints" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+    <xs:attribute name="description" type="xs:string"></xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="line">
+    <xs:sequence>
+      <xs:element name="referencePoints" type="referencePoints" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+    <xs:attribute name="description" type="xs:string"></xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="curve">
+    <xs:sequence>
+      <xs:element name="referencePoints" type="referencePoints" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+    <xs:attribute name="description" type="xs:string"></xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="sector">
+    <xs:sequence>
+      <xs:element name="referencePoints" type="referencePoints" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+    <xs:attribute name="description" type="xs:string"></xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="location">
+    <xs:attribute name="latitude" type="xs:double"></xs:attribute>
+    <xs:attribute name="longitude" type="xs:double"></xs:attribute>
+    <xs:attribute name="direction" type="xs:double"></xs:attribute>
+    <xs:attribute name="description" type="xs:string"></xs:attribute>
+  </xs:complexType>
+
+  
+  <xs:element name="lapData">    
+    <xs:complexType>  
+      <xs:sequence>
+        <xs:element name="lap">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element type="xs:int" name="id"/>
+              <xs:element type="xs:int" name="lapNumber"/>
+              <xs:element type="xs:int" name="type"/>
+              <xs:element type="xs:int" name="sourceLapId"/>
+              <xs:element type="CustomDate"  name="startTime"/>
+              <xs:element type="CustomDateOrEmpty" name="endTime"/>
+              <xs:element type="xs:string" name="vehicleNumber"/>
+              <xs:element type="xs:string" name="vehicleModel"/>
+              <xs:element type="xs:boolean" name="isStartLineCrossed"/>
+              <xs:element type="xs:boolean" name="isEndLineCrossed"/>
+              
+              <!-- Street mode -->
+              <xs:element type="xs:int" name="streetModeTreshold1"/>
+              <xs:element type="xs:int" name="streetModeTreshold2"/>
+              <xs:element type="CustomDateOrEmpty" name="streetModeCutStart"/>
+              <xs:element type="CustomDateOrEmpty" name="streetModeCutEnd"/>
+              <xs:any maxOccurs="unbounded" minOccurs="0" processContents="skip" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="driver">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element type="xs:int" name="id"/>
+              <xs:element type="xs:string" name="driverName"/>
+              <xs:element type="xs:string" name="photo"/> <!-- picture stored in base64 format -->
+              <xs:element type="xs:string" name="driverSurname"/>
+              <xs:any maxOccurs="unbounded" minOccurs="0" processContents="skip" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="vehicle">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element type="xs:int" name="id"/>
+              <xs:element type="xs:string" name="vehicleNumber"/>
+              <xs:element type="xs:string" name="vehicleModel"/>
+              <xs:any maxOccurs="unbounded" minOccurs="0" processContents="skip" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="event">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element type="xs:int" name="id"/>
+              <xs:element type="xs:string" name="name"/>
+              <xs:element type="xs:int" name="type"/>
+              <xs:element type="CustomDate" name="startTime"/>
+              <xs:element type="CustomDateOrEmpty" name="endTime"/>
+              <xs:element type="xs:boolean" name="isDeleted"/>
+              <xs:any maxOccurs="unbounded" minOccurs="0" processContents="skip" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="track">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element type="xs:string" name="id"/>
+              <xs:element type="xs:string" name="name"/>
+              <xs:element type="xs:short" name="distance"/>
+              <xs:element type="xs:byte" name="width"/>
+              <xs:element type="CustomDate" name="definitionModificationDate"/>
+              <xs:element type="xs:byte" name="isDeleted"/>
+              <xs:element type="xs:string" name="timeZoneContinent"/>
+              <xs:element type="xs:string" name="timeZoneCity"/>
+              <xs:element type="xs:int" name="trackType"/><!-- Track type -1 - Unknown; 0 - Normal; 1 - Rally -->
+              <xs:any maxOccurs="unbounded" minOccurs="0" processContents="skip" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="trackVariant">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element type="xs:string" name="id"/>
+              <xs:element type="xs:string" name="name"/>
+              <xs:element name="trackDataXml">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="definition" maxOccurs="1" minOccurs="0" >
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="pitLanePolygon" type="polygon" maxOccurs="1" minOccurs="0" />
+                          <xs:element name="pitLaneStartLine" type="line" maxOccurs="1" minOccurs="0" />
+                          <xs:element name="pitLaneEndLine" type="line" maxOccurs="1" minOccurs="0" />
+                          <xs:element name="startLine" type="line" maxOccurs="1" minOccurs="1" />
+                          <xs:element name="endLine" type="line" maxOccurs="1" minOccurs="1" />
+                          <xs:element name="sectors" maxOccurs="1" minOccurs="0">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element name="sector" minOccurs="0" maxOccurs="unbounded" type="sector"></xs:element>
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                          <xs:element name="curves" maxOccurs="1" minOccurs="1" >
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element name="curve" maxOccurs="unbounded" minOccurs="1" type="curve"></xs:element>
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                          <xs:element name="picture" maxOccurs="1" minOccurs="0" >
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element name="southWestReferencePoint" type="location" minOccurs="1" maxOccurs="1" />
+                                <xs:element name="northEastReferencePoint" type="location"  minOccurs="1" maxOccurs="1" />
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              
+              <xs:element type="xs:int" name="distance"/>
+              <xs:element type="xs:double" name="width"/>
+              <xs:element type="xs:boolean" name="isHistorical"/>
+              <xs:element type="xs:boolean" name="isPreinstalled"/>	
+              <xs:any maxOccurs="unbounded" minOccurs="0" processContents="skip" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="measurements">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="sm" maxOccurs="unbounded" minOccurs="0">	 
+                <xs:complexType>
+                  <xs:simpleContent>
+                    <xs:extension base="xs:string">
+                      <xs:attribute type="xs:int" name="id" use="required"/>
+                      <xs:attribute type="xs:string" name="mt" use="required"/> <!-- measurement time-->
+                      <xs:attribute type="xs:int" name="la" use="required"/><!-- lateral accel-->
+                      <xs:attribute type="xs:int" name="lo" use="required"/><!-- longitudinal accel-->
+                      <xs:attribute type="xs:int" name="za" use="required"/><!-- z accel-->
+                      <xs:attribute type="xs:int" name="ds" use="required"/><!-- distance in lap-->
+                      <xs:attribute type="xs:double" name="lt" use="required"/><!-- latitude-->
+                      <xs:attribute type="xs:double" name="lg" use="required"/><!-- longitude-->
+                      <xs:attribute type="xs:int" name="rp" use="required"/><!-- RPM -->
+                      <xs:attribute type="xs:int" name="gs" use="required"/><!-- GPS Speed-->
+                      <xs:attribute type="xs:int" name="gd" use="required"/><!-- GPS position deviation-->
+                      <xs:attribute type="xs:int" name="ph" use="required"/><!-- pitch-->
+                      <xs:attribute type="xs:int" name="rl" use="required"/><!-- roll-->
+                      <xs:attribute type="xs:int" name="ya" use="required"/><!-- yaw-->
+                      <xs:attribute type="xs:double" name="al" use="required"/><!-- altitude-->
+                      <xs:attribute type="xs:double" name="dr" use="required"/><!-- direction-->
+                      <xs:attribute type="xs:int" name="df" use="required"/><!-- distance offset-->
+                      <xs:attribute type="xs:int" name="os" use="required"/><!-- OBD speed (if data read from OBD slot)-->
+                      <xs:attribute type="xs:int" name="ot" use="required"/><!-- Oil Temp-->
+                      <xs:attribute type="xs:int" name="wt" use="required"/><!-- water/coolant temp-->
+                      
+                      <xs:attribute type="xs:int" name="tp" use="required"/> <!-- throttle possition/gas pedal position-->
+                      <xs:attribute type="xs:int" name="mn" use="required"/> <!-- meanumberinlap-->
+                      <xs:attribute type="xs:int" name="ga" use="required"/> <!-- gps accurancy-->
+                      <xs:attribute type="xs:boolean" name="ipc" use="required"/> <!-- ispositioncalculated-->
+                      
+                      <xs:attribute type="xs:boolean" name="igpsv" use="required"/><!-- is GPS data valid flag-->
+                      <xs:attribute type="xs:boolean" name="igyrv" use="required"/><!-- is Gyroscope data valid flag-->
+                      <xs:attribute type="xs:boolean" name="iobdv" use="required"/><!-- is OBD data valid flag-->
+                      
+                      <!-- CAN Data-->
+                      <xs:attribute type="xs:int" name="gr" use="optional"/> <!-- gear-->
+                      <xs:attribute type="xs:int" name="sa" use="optional"/> <!-- steering angle-->
+                      <xs:attribute type="xs:int" name="bp" use="optional"/> <!-- brake position-->
+                      <xs:attribute type="xs:int" name="op" use="optional"/> <!-- engine oil pressure-->
+                      
+                      <xs:anyAttribute processContents="skip"/>	  
+                    </xs:extension>
+                  </xs:simpleContent>
+                </xs:complexType>
+              </xs:element>   
+            </xs:sequence>
+          </xs:complexType>	  
+        </xs:element>
+        <xs:element name="lapSectors">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="lapsector" maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:int" name="id"/>
+                    <xs:element type="xs:int" name="sectorNumber"/>
+                    <xs:element type="CustomDate" name="startTime"/>
+                    <xs:element type="CustomDateOrEmpty" name="endTime"/>
+                    <xs:any maxOccurs="unbounded" minOccurs="0" processContents="skip" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="videos">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="video"  maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:int" name="id"/>
+                    <xs:element type="xs:string" name="fileName"/>
+                    <xs:element type="CustomDate" name="startTime"/>
+                    <xs:element type="CustomDate" name="endTime"/>
+                    <xs:element type="xs:int" name="status"/>
+                    <xs:element type="xs:int" name="videoQuality"/>
+                    <xs:element type="xs:long" name="videoFileSize"/>
+                    <xs:element type="xs:int" name="parentId"/>
+                    <xs:any maxOccurs="unbounded" minOccurs="0" processContents="skip" />
+                  </xs:sequence>
+                  <xs:attribute type="xs:int" name="locationType" use="required"/> <!-- 0 - NONE; 1 - local; 2 - ftp; 3 - cloud -->
+                  <xs:attribute type="xs:string" name="uri" use="required"/>
+                  <xs:attribute type="xs:string" name="params" />
+		  <xs:anyAttribute processContents="skip"/>	  
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:any maxOccurs="unbounded" minOccurs="0" processContents="skip" />
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="exportDeviceName" use="required"/>
+      <xs:attribute type="xs:string" name="exportDeviceVersion" use="required"/>
+      <xs:attribute type="CustomDate" name="exportDeviceTime" use="required"/>
+      <xs:attribute type="xs:int" name="exportDataVersion" use="required"/>
+      <xs:attribute type="xs:string" name="sourceDeviceName" use="required"/>
+      <xs:attribute type="xs:string" name="lastExportRnDeviceName" use="required"/>
+      <xs:attribute type="xs:string" name="params" />
+      <xs:anyAttribute processContents="skip"/>	  
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

@@ -46,8 +46,10 @@ model TrackVariant {
   boundaryRight Unsupported("geometry(LineString, 4326)")?
   corridors   TrackCorridor[]
   trajectories Trajectory[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  rnTrackSource RnTrackVariantSource?
 
   @@map("track_variants")
 }
@@ -120,6 +122,8 @@ model Trajectory {
   recordedAt      DateTime?
   createdAt       DateTime @default(now())
 
+  rnLap RnLap?
+
   @@index([variantId, sourceType])
   @@index([variantId, lapTimeS])
   @@map("trajectories")
@@ -181,4 +185,175 @@ model TrajectoryComparison {
 
   @@unique([referenceTrajectoryId, comparedTrajectoryId])
   @@map("trajectory_comparisons")
+}
+
+// ---------------------------------------------------------------------------
+// RN Import — raw data preservation layer
+// ---------------------------------------------------------------------------
+
+/// Physical RN hardware unit (e.g. "RNPRO-383").
+/// sourceLapId is a device-local counter — device required for globally unique lap identity.
+model RnDevice {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  deviceName String   @unique  // raw sourceDeviceName from ZIP comment / lapData root
+  deviceType String?           // inferred prefix: "RNPRO", "RNONE", etc.
+  laps       RnLap[]
+
+  @@map("rn_devices")
+}
+
+/// Raw RN track variant definition — stored verbatim for re-processing.
+/// Versioned: if rawDefinitionXml changes on re-import, a new row is added.
+model RnTrackVariantSource {
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rnTrackId          String        // raw RN track GUID
+  rnVariantId        String        // raw RN variant GUID
+  variantName        String
+  versionNumber      Int           @default(1)
+  rawDefinitionXml   String        @db.Text
+  centrelinePoints   Json          // [{ lat, lon, direction }]
+  startLinePoints    Json          // 3-point array
+  endLinePoints      Json
+  sectorLines        Json          // [{ description, points[] }]
+  distanceM          Int
+  widthM             Float
+  trackType          Int           // 0=Normal, 1=Rally
+  processedVariantId String?       @db.Uuid @unique
+  processedVariant   TrackVariant? @relation(fields: [processedVariantId], references: [id])
+  importedAt         DateTime      @default(now())
+  events             RnEventVariant[]
+  laps               RnLap[]
+
+  @@unique([rnVariantId, versionNumber])
+  @@index([rnTrackId])
+  @@map("rn_track_variant_sources")
+}
+
+/// Race event / session from the RN system.
+model RnEvent {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rnEventId      Int              @unique
+  name           String
+  eventType      Int
+  startTime      DateTime
+  endTime        DateTime?
+  laps           RnLap[]
+  variantSources RnEventVariant[]
+
+  @@map("rn_events")
+}
+
+/// Explicit M:N join: an event can use multiple track variants, a variant used in many events.
+model RnEventVariant {
+  eventId         String               @db.Uuid
+  variantSourceId String               @db.Uuid
+  event           RnEvent              @relation(fields: [eventId], references: [id])
+  variantSource   RnTrackVariantSource @relation(fields: [variantSourceId], references: [id])
+
+  @@id([eventId, variantSourceId])
+  @@map("rn_event_variants")
+}
+
+/// Unique driver lookup table.
+model RnDriver {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rnDriverId Int      @unique
+  name       String
+  surname    String?
+  laps       RnLap[]
+
+  @@map("rn_drivers")
+}
+
+/// Central lap record.
+/// Globally unique identity: (sourceDeviceId, eventId, rnSourceLapId).
+model RnLap {
+  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rnSourceLapId       Int                  // device-local counter
+  lapNumber           Int
+  lapType             Int
+  startTime           DateTime
+  endTime             DateTime?
+  isStartLineCrossed  Boolean
+  isEndLineCrossed    Boolean
+  lapTimeMs           Int?
+  sourceDeviceId      String               @db.Uuid
+  sourceDevice        RnDevice             @relation(fields: [sourceDeviceId], references: [id])
+  driverId            String               @db.Uuid
+  driver              RnDriver             @relation(fields: [driverId], references: [id])
+  eventId             String               @db.Uuid
+  event               RnEvent              @relation(fields: [eventId], references: [id])
+  rnVariantSourceId   String               @db.Uuid
+  variantSource       RnTrackVariantSource @relation(fields: [rnVariantSourceId], references: [id])
+  vehicleNumber       String
+  vehicleModel        String
+  exportDeviceName    String?
+  exportDeviceVersion String?
+  exportDeviceTime    DateTime?
+  measurements        RnMeasurement[]
+  canRecords          RnCanRecord[]
+  trajectoryId        String?              @db.Uuid @unique
+  trajectory          Trajectory?          @relation(fields: [trajectoryId], references: [id])
+  importedAt          DateTime             @default(now())
+
+  @@unique([sourceDeviceId, eventId, rnSourceLapId])
+  @@index([rnVariantSourceId])
+  @@map("rn_laps")
+}
+
+/// One telemetry sample (<sm>) from the .rn XML. ~850 rows per lap.
+model RnMeasurement {
+  id                   BigInt   @id @default(autoincrement())
+  rnId                 Int
+  lapId                String   @db.Uuid
+  lap                  RnLap    @relation(fields: [lapId], references: [id])
+  measuredAt           DateTime
+  latitude             Float
+  longitude            Float
+  altitudeM            Float
+  directionDeg         Float
+  gpsSpeedKph          Float
+  gpsPosDeviationCm    Int
+  gpsAccuracy          Int
+  isGpsValid           Boolean
+  isPositionCalculated Boolean
+  lateralG             Float
+  longitudinalG        Float
+  verticalG            Float
+  pitchRateDs          Float
+  rollRateDs           Float
+  yawRateDs            Float
+  isGyroValid          Boolean
+  distanceMm           Int
+  distanceOffsetMm     Int
+  rpm                  Int
+  throttlePct          Int
+  obdSpeedKph          Float
+  oilTempC             Int
+  coolantTempC         Int
+  isObdValid           Boolean
+  gear                 Int?
+  steeringAngle        Int?
+  brakePct             Int?
+  oilPressureBar       Float?
+  measurementNumber    Int
+
+  @@index([lapId, distanceMm])
+  @@index([lapId, measuredAt])
+  @@map("rn_measurements")
+}
+
+/// One CAN/OBD channel reading from the .cdrn CSV. ~1 712 rows per lap.
+model RnCanRecord {
+  id          BigInt   @id @default(autoincrement())
+  rnId        BigInt
+  lapId       String   @db.Uuid
+  lap         RnLap    @relation(fields: [lapId], references: [id])
+  measuredAt  DateTime
+  channelName String
+  unit        String
+  value       Float
+
+  @@index([lapId, channelName])
+  @@map("rn_can_records")
 }
