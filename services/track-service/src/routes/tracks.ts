@@ -1,5 +1,27 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { PrismaClient } from "@prisma/client";
+import type { RnGpsPointDto, TrackOutline } from "@rn-ideallinie/shared-types";
+import {
+  projectToCartesian,
+  computeBounds,
+  simplifyPolyline,
+} from "../geometry/math.js";
+
+function computeOutline(
+  centrelinePoints: unknown,
+  variantId: string
+): TrackOutline | null {
+  try {
+    const gpsPoints = centrelinePoints as unknown as RnGpsPointDto[];
+    if (!gpsPoints || gpsPoints.length < 2) return null;
+    const { points } = projectToCartesian(gpsPoints);
+    const simplified = simplifyPolyline(points, 1.0);
+    const bounds = computeBounds(simplified, 5);
+    return { variantId, points: simplified, bounds };
+  } catch {
+    return null;
+  }
+}
 
 export const trackRoutes: FastifyPluginAsync<{ prisma: PrismaClient }> = async (app, { prisma }) => {
   app.get("/tracks", async () => {
@@ -10,8 +32,9 @@ export const trackRoutes: FastifyPluginAsync<{ prisma: PrismaClient }> = async (
           rnTrackId: true,
           variantName: true,
           trackType: true,
-          // We can't easily get location from the raw XML blobs here without parsing, 
-          // but we can at least return the variant names.
+          centrelinePoints: true,
+          distanceM: true,
+          widthM: true,
         },
         orderBy: { variantName: "asc" }
       });
@@ -20,9 +43,12 @@ export const trackRoutes: FastifyPluginAsync<{ prisma: PrismaClient }> = async (
         data: variants.map(v => ({
           id: v.id,
           name: v.variantName,
-          location: "Imported Track", // Placeholder for now
+          location: "Imported Track",
           countryCode: "??",
-          image: "/track-placeholder.png"
+          image: "/track-placeholder.png",
+          distanceM: v.distanceM,
+          widthM: v.widthM,
+          outline: computeOutline(v.centrelinePoints, v.id),
         })),
         message: "Successfully fetched real track variants",
       };

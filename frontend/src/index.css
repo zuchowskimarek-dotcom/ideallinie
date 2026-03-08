@@ -810,3 +810,252 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-base); 
   letter-spacing: 0.1em;
   border: 1px solid var(--border-accent);
 }
+
+/* =========================================================
+   Animations
+   ========================================================= */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in {
+  animation: fadeIn 0.35s ease-out both;
+}
+
+/* =========================================================
+   Track Card — SVG Thumbnail Layer
+   ========================================================= */
+.track-card-svg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.35;
+  transition: var(--transition);
+  pointer-events: none;
+}
+
+.track-card:hover .track-card-svg {
+  opacity: 0.65;
+}
+
+.track-thumbnail {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.track-thumbnail-line {
+  stroke: var(--accent-text);
+  stroke-width: 2;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.track-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* =========================================================
+   Track Viewer — Full-Page Detail View
+   ========================================================= */
+.track-viewer {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg-base);
+}
+
+.track-viewer-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.track-viewer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.track-viewer-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.track-viewer-stats {
+  display: flex;
+  gap: 8px;
+}
+
+/* =========================================================
+   Track Viewer — Canvas Area
+   ========================================================= */
+.track-viewer-canvas {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.02) 0%, transparent 70%),
+    var(--bg-base);
+}
+
+.track-viewer-canvas:active {
+  cursor: grabbing;
+}
+
+.track-viewer-loading,
+.track-viewer-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  gap: 8px;
+}
+
+/* =========================================================
+   Track SVG Elements
+   ========================================================= */
+.track-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.track-surface {
+  fill: rgba(255, 255, 255, 0.04);
+  stroke: none;
+}
+
+.track-boundary {
+  stroke: var(--border-card);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.track-centreline-segment {
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.track-centreline-hitarea {
+  stroke: transparent;
+  stroke-width: 18;
+  cursor: crosshair;
+  vector-effect: non-scaling-stroke;
+}
+
+.track-start-line {
+  stroke: var(--accent);
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.track-sector-line {
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.track-hover-dot {
+  fill: var(--accent);
+  stroke: var(--accent-text);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+  vector-effect: non-scaling-stroke;
+}
+
+/* =========================================================
+   Track Tooltip
+   ========================================================= */
+.track-tooltip {
+  position: fixed;
+  z-index: 300;
+  pointer-events: none;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-width: 160px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.track-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.track-tooltip-row + .track-tooltip-row {
+  margin-top: 4px;
+}
+
+.track-tooltip-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.track-tooltip-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   Track Viewer — Curvature Legend
+   ========================================================= */
+.track-viewer-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 12px 24px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.track-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.track-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}

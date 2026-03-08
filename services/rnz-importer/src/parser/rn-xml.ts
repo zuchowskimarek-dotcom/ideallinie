@@ -90,6 +90,34 @@ function parseDefinition(defXml: string): {
 }
 
 // ---------------------------------------------------------------------------
+// Build full centreline from all curve segments
+// ---------------------------------------------------------------------------
+function gpsDistanceM(a: RnGpsPoint, b: RnGpsPoint): number {
+  const R = 6_371_000;
+  const dLat = ((b.latitude - a.latitude) * Math.PI) / 180;
+  const dLon = ((b.longitude - a.longitude) * Math.PI) / 180;
+  const cosLat = Math.cos(((a.latitude + b.latitude) / 2 * Math.PI) / 180);
+  return Math.sqrt(dLat * dLat + (dLon * cosLat) * (dLon * cosLat)) * R;
+}
+
+function buildFullCentreline(curves: RnCurve[], fallback: RnGpsPoint[]): RnGpsPoint[] {
+  if (curves.length === 0) return fallback;
+  const result: RnGpsPoint[] = [...curves[0]!.points];
+  for (let i = 1; i < curves.length; i++) {
+    const curvePoints = curves[i]!.points;
+    if (curvePoints.length === 0) continue;
+    // Skip first point if it overlaps with the last accumulated point (< 0.5m)
+    const last = result[result.length - 1];
+    const first = curvePoints[0]!;
+    const startIdx = last && gpsDistanceM(last, first) < 0.5 ? 1 : 0;
+    for (let j = startIdx; j < curvePoints.length; j++) {
+      result.push(curvePoints[j]!);
+    }
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
 // Main parser
 // ---------------------------------------------------------------------------
 export function parseRnXml(buffer: Buffer): RnXmlDoc {
@@ -196,11 +224,8 @@ export function parseRnXml(buffer: Buffer): RnXmlDoc {
       curves: [],
     };
 
-  // centreline = first curve in the definition (or empty)
-  const centrelinePoints =
-    curves.length > 0
-      ? curves[0]!.points
-      : startLinePoints;
+  // centreline = ALL curve segments concatenated (deduplicating shared endpoints)
+  const centrelinePoints = buildFullCentreline(curves, startLinePoints);
 
   // --- measurements --------------------------------------------------------
   const measurementsNode = root["measurements"] as Record<string, unknown> | undefined;

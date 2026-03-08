@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import { config } from "dotenv";
 import { healthRoutes } from "./routes/health.js";
 import { trackRoutes } from "./routes/tracks.js";
+import { geometryRoutes } from "./routes/geometry.js";
 import { PrismaClient } from "@prisma/client";
 
 config({ path: "../../.env" });
@@ -19,6 +20,7 @@ async function main() {
   await app.register(cors, { origin: true });
   await app.register(healthRoutes);
   await app.register(trackRoutes, { prisma });
+  await app.register(geometryRoutes, { prisma });
 
   await app.listen({ port: PORT, host: "0.0.0.0" });
 }

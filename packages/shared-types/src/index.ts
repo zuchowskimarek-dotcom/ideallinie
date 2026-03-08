@@ -59,6 +59,55 @@ export interface TrackCorridorNode {
 }
 
 // ---------------------------------------------------------------------------
+// Track Geometry — rendering-ready data for SVG viewer
+// ---------------------------------------------------------------------------
+
+/** A GPS point as stored in RN data (matches DB JSON shape) */
+export interface RnGpsPointDto {
+  latitude: number;
+  longitude: number;
+  direction: number; // degrees, 0=North clockwise
+}
+
+/** Geometry for a sector or start/finish line — three points in local coords */
+export interface TrackLineGeometry {
+  label: string;
+  left: Point2D;
+  centre: Point2D;
+  right: Point2D;
+}
+
+/** Complete rendering-ready geometry payload for a track variant */
+export interface TrackGeometry {
+  variantId: string;
+  variantName: string;
+  distanceM: number;
+  widthM: number;
+  /** Track centreline as projected Cartesian points with curvature */
+  centreline: TrackPoint[];
+  /** Left track boundary (centreline offset by +widthM/2 perpendicular) */
+  boundaryLeft: Point2D[];
+  /** Right track boundary (centreline offset by -widthM/2 perpendicular) */
+  boundaryRight: Point2D[];
+  /** Start/finish line in local coords */
+  startLine: TrackLineGeometry | null;
+  /** End line */
+  endLine: TrackLineGeometry | null;
+  /** Sector timing lines in local coords */
+  sectorLines: TrackLineGeometry[];
+  /** Bounding box for SVG viewBox computation */
+  bounds: { minX: number; minY: number; maxX: number; maxY: number };
+}
+
+/** Lightweight outline for track card thumbnails */
+export interface TrackOutline {
+  variantId: string;
+  /** Simplified centreline path (XY points, downsampled) */
+  points: Point2D[];
+  bounds: { minX: number; minY: number; maxX: number; maxY: number };
+}
+
+// ---------------------------------------------------------------------------
 // Trajectory
 // ---------------------------------------------------------------------------
 
